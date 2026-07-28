@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SwiftCourier - Track Parcel</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .timeline {
+      display: flex;
+      justify-content: space-between;
+      position: relative;
+      margin-top: 30px;
+    }
+    .timeline::before {
+      content: '';
+      position: absolute;
+      top: 15px;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--glass-border);
+      z-index: 1;
+    }
+    .timeline-step {
+      position: relative;
+      z-index: 2;
+      text-align: center;
+      background: var(--bg-color);
+      padding: 0 8px;
+    }
+    .step-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--glass-border);
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 8px;
+    }
+    .timeline-step.active .step-icon {
+      background: var(--secondary);
+    }
+    .step-label { font-size: 0.75rem; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
+  </nav>
+
+  <div style="max-width: 800px; margin: 40px auto; padding: 0 20px;">
+    <div class="glass" style="padding: 20px; display: flex; gap: 10px;">
+      <input type="text" id="trackSearchInput" class="form-control" placeholder="Enter Tracking Number (e.g., TRK-98231)" style="flex:1;">
+      <button id="trackBtn" class="btn btn-primary">Track</button>
+    </div>
+
+    <div id="trackingResult"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script src="js/tracking.js"></script>
+</body>
+</html>

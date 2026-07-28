@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SwiftCourier - Customer Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .action-btns {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .btn-warning {
+      background: linear-gradient(135deg, #f57c00, #e65100);
+      color: #fff;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+    .btn-danger {
+      background: linear-gradient(135deg, #f44336, #d32f2f);
+      color: #fff;
+      padding: 4px 10px;
+      font-size: 0.8rem;
+    }
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(0, 0, 0, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 2000;
+    }
+    .modal-overlay.active { display: flex; }
+    .modal-box {
+      width: 90%;
+      max-width: 450px;
+      padding: 30px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> Customer Panel</a>
+    <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+  </nav>
+
+  <div class="dashboard-container">
+    <aside class="sidebar glass">
+      <a href="customer.html" class="active"><i class="fas fa-box"></i> My Parcels</a>
+      <a href="booking.html"><i class="fas fa-plus-circle"></i> New Booking</a>
+      <a href="login.html"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </aside>
+
+    <main class="main-content">
+      <h2>Recent Shipments</h2>
+
+      <div class="glass table-responsive" style="margin-top:20px; padding:20px;">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Tracking ID</th>
+              <th>Recipient</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Fee</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customerParcelsTable">
+            <!-- Populated dynamically -->
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Shared Action Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box glass">
+      <i id="modalIcon" class="fas fa-triangle-exclamation" style="font-size: 3rem; color: #f44336; margin-bottom: 15px;"></i>
+      <h3 id="modalTitle">Confirm Action</h3>
+      <p style="color: var(--text-muted); margin: 15px 0;" id="modalText">Are you sure?</p>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <button class="btn" style="background: #ccc; color: #333;" onclick="closeModal()">Close</button>
+        <button class="btn btn-danger" id="confirmModalBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    let currentAction = null; // 'cancel' or 'delete'
+    let selectedId = null;
+
+    function renderCustomerTable() {
+      const tableBody = document.getElementById('customerParcelsTable');
+      if (!tableBody) return;
+
+      if (SwiftCourier.parcels.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding:20px;">No parcels found.</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = SwiftCourier.parcels.map(p => {
+        const isCancelled = p.status === 'Cancelled';
+        const isDelivered = p.status === 'Delivered';
+
+        let badgeClass = 'transit';
+        if (isDelivered) badgeClass = 'delivered';
+        if (isCancelled) badgeClass = 'cancelled';
+
+        return `
+          <tr>
+            <td><strong>${p.id}</strong></td>
+            <td>${p.receiver}</td>
+            <td>${p.type}</td>
+            <td><span class="badge ${badgeClass}">${p.status}</span></td>
+            <td>$${p.cost.toFixed(2)}</td>
+            <td>
+              <div class="action-btns">
+                <a href="tracking.html?id=${p.id}" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem;">Track</a>
+                ${!isDelivered && !isCancelled ? `
+                  <button class="btn btn-warning" onclick="openModal('cancel', '${p.id}')">Cancel</button>
+                ` : ''}
+                <button class="btn btn-danger" onclick="openModal('delete', '${p.id}')"><i class="fas fa-trash"></i> Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function openModal(action, trackingId) {
+      currentAction = action;
+      selectedId = trackingId;
+      const titleEl = document.getElementById('modalTitle');
+      const textEl = document.getElementById('modalText');
+      const iconEl = document.getElementById('modalIcon');
+
+      if (action === 'cancel') {
+        titleEl.innerText = 'Cancel Parcel Order';
+        textEl.innerText = `Are you sure you want to cancel ${trackingId}?`;
+        iconEl.className = 'fas fa-ban';
+        iconEl.style.color = '#f57c00';
+      } else if (action === 'delete') {
+        titleEl.innerText = 'Delete Parcel Permanently';
+        textEl.innerText = `This will remove ${trackingId} completely from your screen.`;
+        iconEl.className = 'fas fa-trash';
+        iconEl.style.color = '#f44336';
+      }
+
+      document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeModal() {
+      currentAction = null;
+      selectedId = null;
+      document.getElementById('confirmModal').classList.remove('active');
+    }
+
+    document.getElementById('confirmModalBtn').addEventListener('click', () => {
+      if (selectedId && currentAction) {
+        if (currentAction === 'cancel') {
+          SwiftCourier.cancelParcel(selectedId);
+        } else if (currentAction === 'delete') {
+          SwiftCourier.deleteParcel(selectedId);
+        }
+        renderCustomerTable();
+        closeModal();
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', renderCustomerTable);
+  </script>
+</body>
+</html>
