@@ -8,13 +8,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const weight = parseFloat(weightInput?.value) || 0;
     const speed = speedInput?.value || 'standard';
     
-    let baseRate = 10;
-    let weightRate = weight * 4;
+    let baseRate = 50; // Base charge in ₹
+    let weightRate = weight * 30; // ₹30 per kg
     let multiplier = speed === 'express' ? 1.5 : (speed === 'overnight' ? 2.0 : 1.0);
 
     let total = (baseRate + weightRate) * multiplier;
     if (totalCostElement) {
-      totalCostElement.innerText = `$${total.toFixed(2)}`;
+      totalCostElement.innerText = `₹${total.toFixed(2)}`;
     }
     return total;
   }
@@ -22,6 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (weightInput && speedInput) {
     weightInput.addEventListener('input', calculateCharge);
     speedInput.addEventListener('change', calculateCharge);
+    calculateCharge(); // Initial calculation on load
   }
 
   if (form) {

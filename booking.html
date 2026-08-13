@@ -2,70 +2,270 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>SwiftCourier - Book Parcel</title>
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/forms.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .booking-wrapper {
+      max-width: 900px;
+      margin: 40px auto;
+      padding: 0 20px;
+    }
+
+    .booking-card {
+      padding: 40px;
+      border-radius: var(--radius);
+    }
+
+    .form-header {
+      text-align: center;
+      margin-bottom: 35px;
+      border-bottom: 1px solid var(--glass-border);
+      padding-bottom: 20px;
+    }
+
+    .form-header h2 {
+      font-size: 2rem;
+      color: var(--primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+    }
+
+    .form-header p {
+      color: var(--text-muted);
+      font-size: 0.95rem;
+      margin-top: 5px;
+    }
+
+    .form-section-title {
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 25px 0 15px 0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      grid-column: span 2;
+    }
+
+    .form-section-title i {
+      color: var(--secondary);
+    }
+
+    .input-with-icon {
+      position: relative;
+    }
+
+    .input-with-icon i {
+      position: absolute;
+      left: 14px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--text-muted);
+      font-size: 0.95rem;
+    }
+
+    .input-with-icon .form-control {
+      padding-left: 42px;
+    }
+
+    /* Summary Card Inside Form */
+    .summary-card {
+      background: rgba(21, 101, 192, 0.05);
+      border: 1px solid rgba(21, 101, 192, 0.15);
+      border-radius: 12px;
+      padding: 20px;
+      margin-top: 10px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      grid-column: span 2;
+    }
+
+    .summary-details span {
+      display: block;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+    }
+
+    .summary-price {
+      text-align: right;
+    }
+
+    .summary-price-amount {
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--secondary);
+    }
+
+    @media (max-width: 600px) {
+      .booking-card { padding: 25px 20px; }
+      .form-section-title { grid-column: span 1; }
+      .summary-card {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 15px;
+        grid-column: span 1;
+      }
+      .summary-price { text-align: left; }
+    }
+  </style>
 </head>
 <body>
 
+  <!-- Standard Navigation Bar -->
   <nav class="navbar">
     <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
-    <a href="customer.html" class="btn btn-secondary">Dashboard</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="tracking.html">Track Parcel</a></li>
+      <li><a href="booking.html" class="active">Book Parcel</a></li>
+      <li><a href="admin.html">Dashboards</a></li>
+    </ul>
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+      <a href="login.html" class="btn btn-primary">Login</a>
+      <div class="hamburger"><i class="fas fa-bars"></i></div>
+    </div>
   </nav>
 
-  <div class="form-card glass">
-    <h2 style="margin-bottom: 20px;"><i class="fas fa-box"></i> Book New Parcel</h2>
-
-    <form id="bookingForm" class="form-grid">
-      <div class="form-group">
-        <label>Sender Full Name</label>
-        <input type="text" id="senderName" class="form-control" required placeholder="John Doe">
+  <!-- Form Container -->
+  <div class="booking-wrapper">
+    <div class="glass booking-card">
+      
+      <!-- Header -->
+      <div class="form-header">
+        <h2><i class="fas fa-paper-plane"></i> Book a Parcel Shipment</h2>
+        <p>Fill out the details below to schedule your pickup and calculate instant delivery rates.</p>
       </div>
 
-      <div class="form-group">
-        <label>Receiver Full Name</label>
-        <input type="text" id="receiverName" class="form-control" required placeholder="Jane Smith">
-      </div>
+      <form id="bookingForm" class="form-grid">
+        
+        <!-- 1. Sender Details -->
+        <div class="form-section-title">
+          <i class="fas fa-user"></i> 1. Sender Information
+        </div>
 
-      <div class="form-group full-width">
-        <label>Delivery Address</label>
-        <input type="text" id="receiverAddress" class="form-control" required placeholder="123 Main Street, City, Zip">
-      </div>
+        <div class="form-group">
+          <label for="senderName">Sender Full Name</label>
+          <div class="input-with-icon">
+            <i class="fas fa-user-tag"></i>
+            <input type="text" id="senderName" class="form-control" required placeholder="John Doe">
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label>Parcel Classification</label>
-        <select id="parcelType" class="form-control">
-          <option value="Document">Document</option>
-          <option value="Standard Package">Standard Package</option>
-          <option value="Fragile Item">Fragile Item</option>
-          <option value="Heavy Freight">Heavy Freight</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="senderPhone">Sender Phone Number</label>
+          <div class="input-with-icon">
+            <i class="fas fa-phone"></i>
+            <input type="tel" id="senderPhone" class="form-control" required placeholder="+1 (555) 000-0000">
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label>Weight (kg)</label>
-        <input type="number" id="weight" step="0.1" class="form-control" value="1.0" min="0.1">
-      </div>
+        <!-- 2. Receiver Details -->
+        <div class="form-section-title">
+          <i class="fas fa-location-dot"></i> 2. Recipient Information
+        </div>
 
-      <div class="form-group">
-        <label>Delivery Speed Option</label>
-        <select id="speed" class="form-control">
-          <option value="standard">Standard (3-5 Days)</option>
-          <option value="express">Express (1-2 Days)</option>
-          <option value="overnight">Overnight Priority</option>
-        </select>
-      </div>
+        <div class="form-group">
+          <label for="receiverName">Recipient Full Name</label>
+          <div class="input-with-icon">
+            <i class="fas fa-user-check"></i>
+            <input type="text" id="receiverName" class="form-control" required placeholder="Jane Smith">
+          </div>
+        </div>
 
-      <div class="form-group">
-        <label>Est. Delivery Fee</label>
-        <div id="totalCost" style="font-size: 1.5rem; font-weight: 700; color: var(--secondary);"> $14.00</div>
-      </div>
+        <div class="form-group">
+          <label for="receiverPhone">Recipient Phone Number</label>
+          <div class="input-with-icon">
+            <i class="fas fa-mobile-screen-button"></i>
+            <input type="tel" id="receiverPhone" class="form-control" required placeholder="+1 (555) 999-1111">
+          </div>
+        </div>
 
-      <div class="form-group full-width">
-        <button type="submit" class="btn btn-primary" style="justify-content: center;">Confirm Order & Pay</button>
-      </div>
-    </form>
+        <div class="form-group full-width">
+          <label for="receiverAddress">Full Delivery Address</label>
+          <div class="input-with-icon">
+            <i class="fas fa-map-marker-alt"></i>
+            <input type="text" id="receiverAddress" class="form-control" required placeholder="123 Street Name, Apartment/Suite, City, State, Zip">
+          </div>
+        </div>
+
+        <!-- 3. Parcel Specifications -->
+        <div class="form-section-title">
+          <i class="fas fa-box-open"></i> 3. Parcel & Delivery Specifications
+        </div>
+
+        <div class="form-group">
+          <label for="parcelType">Parcel Classification</label>
+          <div class="input-with-icon">
+            <i class="fas fa-cubes"></i>
+            <select id="parcelType" class="form-control">
+              <option value="Document">Document / Letters</option>
+              <option value="Standard Package" selected>Standard Package</option>
+              <option value="Fragile Item">Fragile Electronics / Glass</option>
+              <option value="Heavy Freight">Heavy Freight / Cargo</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="weight">Parcel Weight (kg)</label>
+          <div class="input-with-icon">
+            <i class="fas fa-weight-hanging"></i>
+            <input type="number" id="weight" step="0.1" class="form-control" value="1.0" min="0.1" required>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="speed">Delivery Speed Option</label>
+          <div class="input-with-icon">
+            <i class="fas fa-bolt"></i>
+            <select id="speed" class="form-control">
+              <option value="standard">Standard Route (3-5 Days)</option>
+              <option value="express">Express Delivery (1-2 Days)</option>
+              <option value="overnight">Overnight Priority (Next Morning)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="paymentMethod">Payment Method</label>
+          <div class="input-with-icon">
+            <i class="fas fa-credit-card"></i>
+            <select id="paymentMethod" class="form-control">
+              <option value="card">Credit / Debit Card</option>
+              <option value="cod">Cash on Delivery (COD)</option>
+              <option value="wallet">Digital Wallet / UPI</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Fee Summary Card -->
+        <div class="summary-card">
+          <div class="summary-details">
+            <h4 style="font-size: 1.1rem; margin-bottom: 4px;"><i class="fas fa-receipt"></i> Order Summary</h4>
+            <span>Includes estimated handling, route transport, and taxes.</span>
+          </div>
+          <div class="summary-price">
+            <span style="font-weight: 500;">Calculated Total Fee</span>
+            <div id="totalCost" class="summary-price-amount">$14.00</div>
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <div class="form-group full-width" style="margin-top: 15px;">
+          <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 14px; font-size: 1.05rem;">
+            <i class="fas fa-check-circle"></i> Confirm Booking & Pay Now
+          </button>
+        </div>
+
+      </form>
+    </div>
   </div>
 
   <script src="js/app.js"></script>

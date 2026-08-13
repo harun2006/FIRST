@@ -197,3 +197,14 @@ body {
   from { transform: translateX(100%); opacity: 0; }
   to { transform: translateX(0); opacity: 1; }
 }
+/* Styling for Select Dropdown Options */
+select option {
+  background-color: #111c44; /* Matches your dark theme card background */
+  color: var(--text-primary); /* Ensures light text in dark mode */
+}
+
+/* Fallback specifically for dark theme state */
+[data-theme="dark"] select option {
+  background-color: #0b1437; /* Matches --bg-color in dark mode */
+  color: #ffffff;
+}

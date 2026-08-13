@@ -48,8 +48,20 @@
 </head>
 <body>
 
+  <!-- Standard Navigation Bar -->
   <nav class="navbar">
     <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="tracking.html" class="active">Track Parcel</a></li>
+      <li><a href="booking.html">Book Parcel</a></li>
+      <li><a href="admin.html">Dashboards</a></li>
+    </ul>
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+      <a href="login.html" class="btn btn-primary">Login</a>
+      <div class="hamburger"><i class="fas fa-bars"></i></div>
+    </div>
   </nav>
 
   <div style="max-width: 800px; margin: 40px auto; padding: 0 20px;">

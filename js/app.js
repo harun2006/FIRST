@@ -9,7 +9,7 @@ const SwiftCourier = {
       address: '452 Elm St, New York, NY',
       type: 'Express Parcel',
       weight: 2.5,
-      cost: 35.00,
+      cost: 187.50,
       status: 'Out For Delivery',
       currentLoc: 'Manhattan Hub',
       estDelivery: '2026-07-28',
@@ -22,31 +22,25 @@ const SwiftCourier = {
       address: '12 Mission Rd, San Francisco, CA',
       type: 'Heavy Parcel',
       weight: 12.0,
-      cost: 110.00,
+      cost: 410.00,
       status: 'Delivered',
       currentLoc: 'Destination Reached',
       estDelivery: '2026-07-26',
       history: ['Booked', 'Collected', 'Sorted', 'Dispatched', 'Out For Delivery', 'Delivered']
-    },
-    {
-      id: 'TRK-10542',
-      sender: 'David Miller',
-      receiver: 'Emma Watson',
-      address: '88 Market St, Seattle, WA',
-      type: 'Document Parcel',
-      weight: 0.5,
-      cost: 15.00,
-      status: 'Booked',
-      currentLoc: 'Origin Station',
-      estDelivery: '2026-07-30',
-      history: ['Booked']
     }
   ],
 
   init() {
     this.applyTheme();
     this.setupNavbar();
+
+    // PASTE IT HERE:
+    if (!localStorage.getItem('customersCount')) {
+      localStorage.setItem('customersCount', '12450');
+    }
   },
+
+  // ... rest of your js/app.js methods stay the same
 
   applyTheme() {
     document.documentElement.setAttribute('data-theme', this.theme);
@@ -80,7 +74,6 @@ const SwiftCourier = {
     setTimeout(() => toast.remove(), 3500);
   },
 
-  // Cancel Order Function
   cancelParcel(trackingId) {
     const parcelIndex = this.parcels.findIndex(p => p.id.toUpperCase() === trackingId.toUpperCase());
     
@@ -112,7 +105,6 @@ const SwiftCourier = {
     return true;
   },
 
-  // Delete Order Function (Completely removes from array & localStorage)
   deleteParcel(trackingId) {
     const initialLength = this.parcels.length;
     this.parcels = this.parcels.filter(p => p.id.toUpperCase() !== trackingId.toUpperCase());

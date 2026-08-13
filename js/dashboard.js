@@ -13,7 +13,7 @@ function renderCustomerTable() {
       <td>${p.receiver}</td>
       <td>${p.type}</td>
       <td><span class="badge ${p.status.toLowerCase().includes('delivered') ? 'delivered' : 'transit'}">${p.status}</span></td>
-      <td>$${p.cost.toFixed(2)}</td>
+      <td>₹${p.cost.toFixed(2)}</td>
       <td><a href="tracking.html?id=${p.id}" class="btn btn-secondary" style="padding:4px 12px; font-size:0.8rem;">Track</a></td>
     </tr>
   `).join('');

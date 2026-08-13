@@ -7,61 +7,62 @@
   <link rel="stylesheet" href="css/dashboard.css">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    .action-btns {
-      display: flex;
-      gap: 6px;
-    }
-    .btn-warning {
-      background: linear-gradient(135deg, #f57c00, #e65100);
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-    }
-    .btn-danger {
-      background: linear-gradient(135deg, #f44336, #d32f2f);
-      color: #fff;
-      padding: 4px 10px;
-      font-size: 0.8rem;
-    }
-    .modal-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100vw;
-      height: 100vh;
-      background: rgba(0, 0, 0, 0.5);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      z-index: 2000;
-    }
+    .action-btns { display: flex; gap: 6px; }
+    .btn-warning { background: linear-gradient(135deg, #f57c00, #e65100); color: #fff; padding: 4px 10px; font-size: 0.8rem; }
+    .btn-danger { background: linear-gradient(135deg, #f44336, #d32f2f); color: #fff; padding: 4px 10px; font-size: 0.8rem; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
     .modal-overlay.active { display: flex; }
-    .modal-box {
-      width: 90%;
-      max-width: 450px;
-      padding: 30px;
-      text-align: center;
-    }
+    .modal-box { width: 90%; max-width: 450px; padding: 30px; text-align: center; }
   </style>
 </head>
 <body>
 
+  <!-- Standard Navigation Bar -->
   <nav class="navbar">
-    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier Admin</a>
-    <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="tracking.html">Track Parcel</a></li>
+      <li><a href="booking.html">Book Parcel</a></li>
+      <li><a href="admin.html" class="active">Dashboards</a></li>
+    </ul>
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+      <a href="login.html" class="btn btn-primary">Login</a>
+      <div class="hamburger"><i class="fas fa-bars"></i></div>
+    </div>
   </nav>
 
   <div class="dashboard-container">
     <aside class="sidebar glass">
       <a href="admin.html" class="active"><i class="fas fa-chart-pie"></i> Overview</a>
+      <a href="employee.html"><i class="fas fa-users"></i> Personnel</a>
       <a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
     </aside>
 
     <main class="main-content">
       <div class="stats-grid">
-        <div class="stat-card glass"><div class="stat-icon"><i class="fas fa-users"></i></div><div class="stat-info"><h3>12,450</h3><p>Customers</p></div></div>
-        <div class="stat-card glass"><div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div><div class="stat-info"><h3 id="adminTotalParcels">0</h3><p>Total Parcels</p></div></div>
-        <div class="stat-card glass"><div class="stat-icon"><i class="fas fa-sack-dollar"></i></div><div class="stat-info"><h3>$245,800</h3><p>Revenue</p></div></div>
+        <div class="stat-card glass">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-info">
+            <h3 id="adminCustomers">0</h3>
+            <p>Customers</p>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div>
+          <div class="stat-info">
+            <h3 id="adminTotalParcels">0</h3>
+            <p>Total Parcels</p>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-icon"><i class="fas fa-sack-dollar"></i></div>
+          <div class="stat-info">
+            <h3 id="adminRevenue">₹0</h3>
+            <p>Revenue</p>
+          </div>
+        </div>
       </div>
 
       <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
@@ -75,7 +76,6 @@
         </div>
       </div>
 
-      <!-- Admin Parcel Management Table -->
       <h2 style="margin-top: 20px;">All System Parcels</h2>
       <div class="glass table-responsive" style="margin-top:15px; padding:20px;">
         <table class="custom-table">
@@ -90,14 +90,12 @@
             </tr>
           </thead>
           <tbody id="adminParcelsTable">
-            <!-- Populated dynamically -->
           </tbody>
         </table>
       </div>
     </main>
   </div>
 
-  <!-- Admin Confirmation Modal -->
   <div class="modal-overlay" id="adminModal">
     <div class="modal-box glass">
       <i id="adminModalIcon" class="fas fa-shield-halved" style="font-size: 3rem; color: #1565C0; margin-bottom: 15px;"></i>
@@ -117,10 +115,21 @@
     let adminTargetId = null;
 
     function renderAdminTable() {
-      const tableBody = document.getElementById('adminParcelsTable');
-      const countEl = document.getElementById('adminTotalParcels');
-      if (countEl) countEl.innerText = SwiftCourier.parcels.length;
+      // 1. Update Customers count dynamically from localStorage
+      const customersCount = parseInt(localStorage.getItem('customersCount')) || 12450;
+      const custEl = document.getElementById('adminCustomers');
+      if (custEl) custEl.innerText = customersCount.toLocaleString();
 
+      // 2. Update Total Parcels count dynamically
+      const countEl = document.getElementById('adminTotalParcels');
+      if (countEl) countEl.innerText = SwiftCourier.parcels.length.toLocaleString();
+
+      // 3. Update Revenue dynamically (Sum of all parcel costs)
+      const totalRevenue = SwiftCourier.parcels.reduce((sum, p) => sum + (parseFloat(p.cost) || 0), 0);
+      const revEl = document.getElementById('adminRevenue');
+      if (revEl) revEl.innerText = `₹${totalRevenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+      const tableBody = document.getElementById('adminParcelsTable');
       if (!tableBody) return;
 
       if (SwiftCourier.parcels.length === 0) {
@@ -142,7 +151,7 @@
             <td>${p.sender}</td>
             <td>${p.receiver}</td>
             <td><span class="badge ${badgeClass}">${p.status}</span></td>
-            <td>$${p.cost.toFixed(2)}</td>
+            <td>₹${parseFloat(p.cost).toFixed(2)}</td>
             <td>
               <div class="action-btns">
                 ${!isDelivered && !isCancelled ? `
