@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SwiftCourier - Delivery Agent</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+
+  <nav class="navbar">
+    <a href="index.html" class="logo"><i class="fas fa-motorcycle"></i> Agent Portal</a>
+    
+    <!-- FIXED: Unified navigation links with smart routing -->
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="tracking.html">Track Parcel</a></li>
+      <li><a href="booking.html">Book Parcel</a></li>
+      <li><a href="#" class="active" onclick="routeToDashboard(event)">Dashboards</a></li>
+    </ul>
+
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+      <button onclick="logoutUser()" class="btn btn-primary" style="cursor: pointer; border: none;">Logout</button>
+    </div>
+  </nav>
+
+  <div style="max-width: 900px; margin: 40px auto; padding: 0 20px;">
+    
+    <div class="glass" style="padding: 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-left: 5px solid var(--secondary);">
+      <div>
+        <h2 style="margin-bottom: 5px;">My Route Today</h2>
+        <p style="color: var(--text-muted); font-size: 0.9rem;">Mark items as delivered upon successful customer handover.</p>
+      </div>
+      <div style="text-align: right;">
+        <span style="font-size: 2rem; font-weight: bold; color: var(--primary);" id="activeDeliveries">0</span>
+        <span style="color: var(--text-muted); display: block; font-size: 0.8rem;">Remaining</span>
+      </div>
+    </div>
+
+    <div id="deliveryList" style="display: flex; flex-direction: column; gap: 15px;">
+      <!-- Cards injected via JS -->
+    </div>
+
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    // FIXED: Smart Routing Logic
+    function routeToDashboard(event) {
+      event.preventDefault(); 
+      const role = localStorage.getItem('userRole');
+      if (role === 'admin') window.location.href = 'admin.html';
+      else if (role === 'branch') window.location.href = 'branch.html';
+      else if (role === 'agent') window.location.href = 'delivery.html';
+      else if (role === 'customer') window.location.href = 'customer.html';
+      else window.location.href = 'login.html';
+    }
+
+    // FIXED: Logout function
+    function logoutUser() {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('userRole');
+      window.location.href = 'login.html';
+    }
+
+    // FIXED: Secured Fetch Logic
+    async function loadDeliveryRoute() {
+      try {
+        const token = localStorage.getItem('authToken');
+        
+        // Kick them out if not logged in
+        if (!token) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/api/bookings/all', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Provide the VIP pass
+          }
+        });
+
+        if (!response.ok) throw new Error('Session Expired');
+
+        const allBookings = await response.json();
+
+        // Agents only care about parcels currently out for delivery
+        const routeBookings = allBookings.filter(b => b.status === 'Out for Delivery');
+        document.getElementById('activeDeliveries').innerText = routeBookings.length;
+
+        const listDiv = document.getElementById('deliveryList');
+        
+        if (routeBookings.length === 0) {
+          listDiv.innerHTML = `<div class="glass" style="text-align:center; padding:40px;"><i class="fas fa-check-circle" style="font-size:3rem; color: #4CAF50; margin-bottom: 10px;"></i><h3>All Caught Up!</h3><p style="color:var(--text-muted);">No active deliveries assigned to your route.</p></div>`;
+          return;
+        }
+
+        listDiv.innerHTML = routeBookings.map(b => {
+          const weight = b.weight || 0; 
+          const collectionAmount = (150 + (weight * 50)).toFixed(2);
+
+          return `
+          <div class="glass" style="padding: 20px; display: flex; justify-content: space-between; flex-wrap: wrap; gap: 15px; border-radius: 12px;">
+            <div style="flex: 1; min-width: 250px;">
+              <h3 style="color: var(--text-primary); margin-bottom: 8px;"><i class="fas fa-box" style="color: var(--secondary);"></i> ${b.trackingId}</h3>
+              <p><strong>To:</strong> ${b.receiverName} | <i class="fas fa-phone"></i> ${b.receiverPhone || 'N/A'}</p>
+              <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 5px;"><i class="fas fa-map-marker-alt" style="color: #ff4d4d;"></i> ${b.deliveryAddress}</p>
+              <p style="margin-top: 5px; font-weight: bold; color: var(--primary);">Collect: ₹${collectionAmount}</p>
+            </div>
+            <div style="display: flex; align-items: center;">
+              <button onclick="markDelivered('${b.trackingId}')" class="btn" style="background: #4CAF50; color: white; padding: 12px 20px; font-size: 1rem; border-radius: 8px; cursor: pointer; border: none;">
+                <i class="fas fa-check-double"></i> Mark Delivered
+              </button>
+            </div>
+          </div>
+        `}).join('');
+
+      } catch (error) {
+        console.error('Error fetching route data:', error);
+        document.getElementById('deliveryList').innerHTML = `<div class="glass" style="text-align:center; padding:40px; color: #ff6b6b;"><i class="fas fa-lock" style="font-size:3rem; margin-bottom: 10px;"></i><h3>Access Denied</h3><p>Please log in again.</p></div>`;
+      }
+    }
+
+    // FIXED: Secured Update Logic
+    async function markDelivered(trackingId) {
+      if(!confirm(`Confirm successful delivery to customer for ${trackingId}?`)) return;
+
+      try {
+        const token = localStorage.getItem('authToken');
+        const response = await fetch(`https://swiftcourier-api.onrender.com/api/bookings/update/${trackingId}`, {
+          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Provide the VIP pass for updates
+          },
+          body: JSON.stringify({ status: 'Delivered', currentLocation: 'Customer Address' })
+        });
+
+        if (response.ok) {
+          loadDeliveryRoute(); // Refresh the list instantly
+        } else {
+          alert("Failed to update system.");
+        }
+      } catch (error) {
+        alert("Network Error.");
+      }
+    }
+
+    document.addEventListener('DOMContentLoaded', loadDeliveryRoute);
+  </script>
+</body>
+</html>

@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SwiftCourier - Authentication</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/forms.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Precise Frame Form Centering & Layout */
+    .login-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: calc(100vh - 120px);
+      padding: 20px;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      padding: 40px;
+      margin: 0 auto;
+      border-radius: 16px;
+    }
+
+    .login-card h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      font-size: 1.8rem;
+    }
+
+    .login-card .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 20px;
+      width: 100%;
+    }
+
+    .login-card .form-group label {
+      font-weight: 500;
+      font-size: 0.9rem;
+    }
+
+    .login-card .form-control {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--glass-border);
+      background: rgba(255, 255, 255, 0.08);
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      outline: none;
+      box-sizing: border-box;
+    }
+
+    .login-card .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(21, 101, 192, 0.2);
+    }
+    
+    /* Added style for the register link */
+    .register-link {
+      text-align: center;
+      margin-top: 20px;
+      font-size: 0.9rem;
+    }
+    .register-link a {
+      color: var(--secondary);
+      text-decoration: none;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Standard Navigation Bar -->
+  <!-- Minimal Navigation Bar for Login -->
+  <nav class="navbar">
+    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
+    
+    <!-- We removed the <ul> list of links completely! -->
+    
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+      <!-- Optional: Since they are on the login page, let's make the button point to Register -->
+      <a href="register.html" class="btn btn-primary">Register</a>
+    </div>
+  </nav>
+
+  <!-- Centered Form Wrapper Frame -->
+  <div class="login-container">
+    <div class="glass login-card">
+      <h2>Welcome Back</h2>
+      
+      <form id="loginForm">
+        <div class="form-group">
+          <label for="username">Username / Email</label>
+          <input type="text" id="username" class="form-control" placeholder="Enter your username" required>
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="••••••••" required>
+        </div>
+
+        <button type="submit" id="loginBtn" class="btn btn-primary" style="width: 100%; justify-content: center; margin-top: 10px; padding: 12px;">Sign In</button>
+      </form>
+      
+      <!-- Link to the Registration Page -->
+      <div class="register-link">
+        Don't have an account? <a href="register.html">Register here</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/app.js"></script>
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+      e.preventDefault(); 
+
+      // Get the value from the input field
+      const loginInput = document.getElementById('username').value;
+      const password = document.getElementById('password').value;
+      const loginBtn = document.getElementById('loginBtn');
+      
+      // UI feedback
+      const originalText = loginBtn.innerText;
+      loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
+      loginBtn.disabled = true;
+
+      try {
+        const response = await fetch('https://swiftcourier-api.onrender.com/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          // FIXED: Send the input as BOTH email and username so the backend is happy either way!
+          body: JSON.stringify({ email: loginInput, username: loginInput, password })
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          localStorage.setItem('authToken', data.token);
+          localStorage.setItem('userRole', data.role);
+          
+          SwiftCourier.showToast('Login successful!', 'success');
+          
+          setTimeout(() => {
+            const role = data.role;
+            if (role === 'admin') window.location.href = 'admin.html';
+            else if (role === 'branch') window.location.href = 'branch.html';
+            else if (role === 'agent') window.location.href = 'delivery.html';
+            else window.location.href = 'customer.html';
+          }, 1000);
+
+        } else {
+          SwiftCourier.showToast(data.message || data.error || 'Invalid email or password.', 'error');
+        }
+      } catch (error) {
+        console.error('Login error:', error);
+        SwiftCourier.showToast('Failed to connect to the server. Is it running?', 'error');
+      } finally {
+        loginBtn.innerText = originalText;
+        loginBtn.disabled = false;
+      }
+    });
+  </script>
+</body>
+</html>

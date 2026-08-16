@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SwiftCourier - System Administration</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .action-btns { display: flex; gap: 6px; }
+    .btn-warning { background: linear-gradient(135deg, #f57c00, #e65100); color: #fff; padding: 4px 10px; font-size: 0.8rem; border: none; cursor: pointer; border-radius: 4px;}
+    .btn-danger { background: linear-gradient(135deg, #f44336, #d32f2f); color: #fff; padding: 4px 10px; font-size: 0.8rem; border: none; cursor: pointer; border-radius: 4px;}
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 2000; backdrop-filter: blur(4px); }
+    .modal-overlay.active { display: flex; }
+    .modal-box { width: 90%; max-width: 450px; padding: 30px; text-align: center; border-radius: 16px; }
+  </style>
+</head>
+<body>
+
+  <!-- Standard Navigation Bar -->
+  <nav class="navbar">
+    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="tracking.html">Track Parcel</a></li>
+      <li><a href="booking.html">Book Parcel</a></li>
+      <li><a href="#" class="active" onclick="routeToDashboard(event)">Dashboards</a></li>
+    </ul>
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()">
+        <i class="fas fa-moon"></i>
+      </button>
+      <a href="login.html" class="btn btn-primary">Login</a>
+      <div class="hamburger"><i class="fas fa-bars"></i></div>
+    </div>
+  </nav>
+
+  <div class="dashboard-container">
+    <aside class="sidebar glass">
+      <a href="admin.html" class="active"><i class="fas fa-chart-pie"></i> Overview</a>
+      <a href="employee.html"><i class="fas fa-users"></i> Personnel</a>
+      <a href="login.html"><i class="fas fa-sign-out-alt"></i> Logout</a>
+    </aside>
+
+    <main class="main-content">
+      <div class="stats-grid">
+        <div class="stat-card glass">
+          <div class="stat-icon"><i class="fas fa-users"></i></div>
+          <div class="stat-info">
+            <h3 id="adminCustomers">0</h3>
+            <p>Customers</p>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-icon"><i class="fas fa-boxes-stacked"></i></div>
+          <div class="stat-info">
+            <h3 id="adminTotalParcels">0</h3>
+            <p>Total Parcels</p>
+          </div>
+        </div>
+        <div class="stat-card glass">
+          <div class="stat-icon"><i class="fas fa-sack-dollar"></i></div>
+          <div class="stat-info">
+            <h3 id="adminRevenue">₹0</h3>
+            <p>Revenue</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- relative wrappers to stop Chart.js from growing infinitely -->
+      <div style="display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px;">
+        <div class="glass" style="flex: 1; min-width: 280px; padding: 20px;">
+          <h3>Monthly Shipment Volumes</h3>
+          <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="barChartCanvas"></canvas>
+          </div>
+        </div>
+        <div class="glass" style="flex: 1; min-width: 280px; padding: 20px;">
+          <h3>Parcel Type Breakdown</h3>
+          <div style="position: relative; height: 250px; width: 100%;">
+            <canvas id="pieChartCanvas"></canvas>
+          </div>
+        </div>
+      </div>
+
+      <h2 style="margin-top: 20px;">All System Parcels</h2>
+      <div class="glass table-responsive" style="margin-top:15px; padding:20px;">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Tracking ID</th>
+              <th>Sender</th>
+              <th>Receiver</th>
+              <th>Status</th>
+              <th>Cost</th>
+              <th>Admin Actions</th>
+            </tr>
+          </thead>
+          <tbody id="adminParcelsTable">
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Delete Confirmation Modal -->
+  <div class="modal-overlay" id="adminModal">
+    <div class="modal-box glass">
+      <i id="adminModalIcon" class="fas fa-shield-halved" style="font-size: 3rem; color: #1565C0; margin-bottom: 15px;"></i>
+      <h3 id="adminModalTitle">Admin Action</h3>
+      <p style="color: var(--text-muted); margin: 15px 0;" id="adminModalText">Are you sure?</p>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <button class="btn" style="background: #ccc; color: #333;" onclick="closeAdminModal()">Cancel</button>
+        <button class="btn btn-danger" id="confirmAdminModalBtn">Proceed</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW: Status Update Modal -->
+  <div class="modal-overlay" id="statusUpdateModal">
+    <div class="modal-box glass" style="max-width: 400px;">
+      <i class="fas fa-edit" style="font-size: 3rem; color: #f57c00; margin-bottom: 15px;"></i>
+      <h3 style="margin-bottom: 10px; color: var(--text-primary);">Update Parcel Status</h3>
+      <p style="margin-bottom: 20px; font-size: 0.9rem; color: var(--text-muted);">
+        Tracking ID: <span id="modalTrackingId" style="font-weight: bold; color: var(--text-primary);"></span>
+      </p>
+
+      <div class="form-group" style="text-align: left; margin-bottom: 25px;">
+        <label style="display: block; margin-bottom: 8px; font-size: 0.9rem; color: var(--text-primary);">Select New Status:</label>
+        <select id="newStatusSelect" class="form-control" style="width: 100%; padding: 12px; border-radius: 8px; background: rgba(255, 255, 255, 0.1); color: var(--text-primary); border: 1px solid var(--glass-border);">
+          <option value="Pending" style="color: black;">Pending</option>
+          <option value="In Transit" style="color: black;">In Transit</option>
+          <option value="Delivered" style="color: black;">Delivered</option>
+          <option value="Cancelled" style="color: black;">Cancelled</option>
+        </select>
+      </div>
+
+      <div style="display: flex; gap: 15px; justify-content: center;">
+        <button onclick="closeStatusModal()" class="btn" style="flex: 1; background: #ccc; color: #333;">Cancel</button>
+        <button onclick="submitStatusUpdate()" id="submitStatusBtn" class="btn btn-warning" style="flex: 1;">Save Update</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart.js for the graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/app.js"></script>
+  
+  <script>
+    function routeToDashboard(event) {
+      event.preventDefault(); 
+      const role = localStorage.getItem('userRole');
+      if (role === 'admin') window.location.href = 'admin.html';
+      else if (role === 'branch') window.location.href = 'branch.html';
+      else if (role === 'agent') window.location.href = 'delivery.html';
+      else if (role === 'customer') window.location.href = 'customer.html';
+      else window.location.href = 'login.html';
+    }
+
+    let currentAdminAction = null;
+    let selectedAdminId = null;
+    let adminBarChart = null;
+    let adminPieChart = null;
+
+    async function loadAdminDashboard() {
+      try {
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        const response = await fetch('http://localhost:3000/api/bookings/all', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          }
+        });
+
+        if (!response.ok) throw new Error('Session Expired or Unauthorized');
+
+        const parcels = await response.json();
+        
+        document.getElementById('adminTotalParcels').innerText = parcels.length;
+        
+        let totalRevenue = 0;
+        const uniqueCustomers = new Set();
+        const typeCounts = { 'Standard': 0, 'Express': 0, 'Fragile': 0, 'Heavy': 0 };
+        let activeParcelsCount = 0;
+        let deliveredParcelsCount = 0;
+        
+        parcels.forEach(p => {
+          const weight = p.weight || 1;
+          totalRevenue += (150 + (weight * 50));
+          
+          if (p.senderName) uniqueCustomers.add(p.senderName);
+
+          const pType = p.parcelType || 'Standard';
+          if (typeCounts[pType] !== undefined) {
+             typeCounts[pType]++;
+          } else {
+             typeCounts['Standard']++; 
+          }
+
+          if (p.status === 'Delivered') {
+            deliveredParcelsCount++;
+          } else if (p.status !== 'Cancelled') {
+            activeParcelsCount++;
+          }
+        });
+        
+        document.getElementById('adminRevenue').innerText = '₹' + totalRevenue.toFixed(2);
+        document.getElementById('adminCustomers').innerText = uniqueCustomers.size;
+
+        renderCharts(activeParcelsCount, deliveredParcelsCount, typeCounts);
+
+        const tableBody = document.getElementById('adminParcelsTable');
+        
+        if (parcels.length === 0) {
+          tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No parcels in the system.</td></tr>`;
+          return;
+        } 
+
+        tableBody.innerHTML = parcels.map(p => {
+          const weight = p.weight || 1;
+          const cost = 150 + (weight * 50);
+          let badgeClass = 'transit';
+          if (p.status === 'Delivered') badgeClass = 'delivered';
+          if (p.status === 'Cancelled') badgeClass = 'cancelled';
+          if (p.status === 'Pending') badgeClass = 'pending';
+
+          return `
+            <tr>
+              <td><strong>${p.trackingId}</strong></td>
+              <td>${p.senderName || 'N/A'}</td>
+              <td>${p.receiverName || 'N/A'}</td>
+              <td><span class="badge ${badgeClass}">${p.status}</span></td>
+              <td>₹${cost.toFixed(2)}</td>
+              <td>
+                <div class="action-btns">
+                  <!-- FIXED: Now triggers the custom modal instead of promptUpdateStatus -->
+                  <button class="btn btn-warning" onclick="openStatusModal('${p.trackingId}', '${p.status}')">Update</button>
+                  <button class="btn btn-danger" onclick="openAdminModal('delete', '${p.trackingId}')"><i class="fas fa-trash"></i> Delete</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+        
+      } catch (error) {
+        console.error('Error fetching admin data:', error);
+        document.getElementById('adminParcelsTable').innerHTML = `<tr><td colspan="6" style="text-align:center; color: #ff6b6b;"><i class="fas fa-lock"></i> Access Denied. Please log in as Admin.</td></tr>`;
+      }
+    }
+
+    function renderCharts(active, delivered, typeCounts) {
+      if (adminBarChart) adminBarChart.destroy();
+      if (adminPieChart) adminPieChart.destroy();
+
+      const barCtx = document.getElementById('barChartCanvas').getContext('2d');
+      adminBarChart = new Chart(barCtx, {
+        type: 'bar',
+        data: {
+          labels: ['Active Shipments', 'Delivered'],
+          datasets: [{
+            label: 'Total Parcels',
+            data: [active, delivered],
+            backgroundColor: ['#1565C0', '#4CAF50'],
+            borderRadius: 6
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+
+      const pieCtx = document.getElementById('pieChartCanvas').getContext('2d');
+      adminPieChart = new Chart(pieCtx, {
+        type: 'doughnut',
+        data: {
+          labels: Object.keys(typeCounts),
+          datasets: [{
+            data: Object.values(typeCounts),
+            backgroundColor: ['#1976D2', '#FF9800', '#f44336', '#9C27B0'],
+            borderWidth: 0
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
+      });
+    }
+
+    /* --- NEW STATUS MODAL LOGIC --- */
+    let currentUpdateId = null;
+
+    function openStatusModal(trackingId, currentStatus) {
+      currentUpdateId = trackingId;
+      document.getElementById('modalTrackingId').innerText = trackingId;
+      document.getElementById('newStatusSelect').value = currentStatus;
+      document.getElementById('statusUpdateModal').classList.add('active');
+    }
+
+    function closeStatusModal() {
+      currentUpdateId = null;
+      document.getElementById('statusUpdateModal').classList.remove('active');
+    }
+
+    async function submitStatusUpdate() {
+      if (!currentUpdateId) return;
+      
+      const newStatus = document.getElementById('newStatusSelect').value;
+      const updateBtn = document.getElementById('submitStatusBtn');
+      
+      // Loading state UI
+      const originalText = updateBtn.innerHTML;
+      updateBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Saving...';
+      updateBtn.disabled = true;
+
+      try {
+        const token = localStorage.getItem('authToken');
+const response = await fetch(`https://swiftcourier-api.onrender.com/api/bookings/update/${currentUpdateId}`, {          method: 'PUT',
+          headers: { 
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` 
+          },
+          body: JSON.stringify({ status: newStatus, currentLocation: 'Updated by System Admin' })
+        });
+        
+        if (response.ok) {
+           if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
+             SwiftCourier.showToast(`Status updated to ${newStatus}`, 'success');
+           }
+           closeStatusModal();
+           loadAdminDashboard(); // Refresh table data instantly
+        } else {
+           if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
+             SwiftCourier.showToast('Failed to update status.', 'error');
+           }
+        }
+      } catch (error) {
+        console.error(error);
+        if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
+           SwiftCourier.showToast('Server error. Is the backend running?', 'error');
+        }
+      } finally {
+        updateBtn.innerHTML = originalText;
+        updateBtn.disabled = false;
+      }
+    }
+    /* ------------------------------ */
+
+    function openAdminModal(action, trackingId) {
+      currentAdminAction = action;
+      selectedAdminId = trackingId;
+      document.getElementById('adminModalTitle').innerText = 'Delete System Record';
+      document.getElementById('adminModalText').innerText = `Are you absolutely sure you want to permanently delete the record for ${trackingId}?`;
+      document.getElementById('adminModalIcon').className = 'fas fa-triangle-exclamation';
+      document.getElementById('adminModalIcon').style.color = '#f44336';
+      document.getElementById('adminModal').classList.add('active');
+    }
+
+    function closeAdminModal() {
+      currentAdminAction = null;
+      selectedAdminId = null;
+      document.getElementById('adminModal').classList.remove('active');
+    }
+
+    document.getElementById('confirmAdminModalBtn').addEventListener('click', async () => {
+      if (currentAdminAction === 'delete' && selectedAdminId) {
+        try {
+          const token = localStorage.getItem('authToken');
+          await fetch(`http://localhost:3000/api/bookings/${selectedAdminId}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          
+          if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
+             SwiftCourier.showToast('Parcel deleted successfully.', 'success');
+          }
+          
+          closeAdminModal();
+          loadAdminDashboard(); 
+        } catch (error) {
+          if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
+             SwiftCourier.showToast('Failed to delete parcel.', 'error');
+          }
+        }
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', loadAdminDashboard);
+  </script>
+</body>
+</html>

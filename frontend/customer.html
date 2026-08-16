@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>SwiftCourier - Customer Portal</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/dashboard.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .action-btns { display: flex; gap: 6px; align-items: center; }
+    .btn-warning { background: linear-gradient(135deg, #f57c00, #e65100); color: #fff; padding: 4px 10px; font-size: 0.8rem; border: none; cursor: pointer; border-radius: 4px; }
+    .btn-danger { background: linear-gradient(135deg, #f44336, #d32f2f); color: #fff; padding: 4px 10px; font-size: 0.8rem; border: none; cursor: pointer; border-radius: 4px; }
+    .modal-overlay { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background: rgba(0, 0, 0, 0.5); display: none; align-items: center; justify-content: center; z-index: 2000; }
+    .modal-overlay.active { display: flex; }
+    .modal-box { width: 90%; max-width: 450px; padding: 30px; text-align: center; }
+  </style>
+</head>
+<>
+
+  <!-- Standard Navigation Bar -->
+  <nav class="navbar">
+    <a href="index.html" class="logo"><i class="fas fa-box-open"></i> SwiftCourier</a>
+    <ul class="nav-links">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="tracking.html">Track Parcel</a></li>
+      <li><a href="booking.html">Book Parcel</a></li>
+      <li><a href="admin.html" class="active">Dashboards</a></li>
+    </ul>
+    <div class="nav-btns">
+      <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
+      <a href="login.html" class="btn btn-primary">Login</a>
+      <div class="hamburger"><i class="fas fa-bars"></i></div>
+    </div>
+  </nav>
+
+  <div class="dashboard-container">
+    <aside class="sidebar glass">
+      <a href="customer.html" class="active"><i class="fas fa-box"></i> My Parcels</a>
+      <a href="booking.html"><i class="fas fa-plus-circle"></i> New Booking</a>
+      <a href="login.html"><i class="fas fa-sign-out-alt"></i> Sign Out</a>
+    </aside>
+
+    <main class="main-content">
+      <h2>Recent Shipments</h2>
+
+      <div class="glass table-responsive" style="margin-top:20px; padding:20px;">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>Tracking ID</th>
+              <th>Recipient</th>
+              <th>Type</th>
+              <th>Status</th>
+              <th>Fee</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="customerParcelsTable">
+            <tr><td colspan="6" style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Loading your shipments...</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </main>
+  </div>
+
+  <!-- Shared Action Confirmation Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal-box glass">
+      <i id="modalIcon" class="fas fa-triangle-exclamation" style="font-size: 3rem; color: #f44336; margin-bottom: 15px;"></i>
+      <h3 id="modalTitle">Confirm Action</h3>
+      <p style="color: var(--text-muted); margin: 15px 0;" id="modalText">Are you sure?</p>
+      <div style="display: flex; gap: 15px; justify-content: center; margin-top: 20px;">
+        <button class="btn" style="background: #ccc; color: #333;" onclick="closeModal()">Close</button>
+        <button class="btn btn-danger" id="confirmModalBtn">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let currentAction = null;
+    let selectedId = null;
+
+    // 1. Fetch live data from MongoDB securely
+    async function loadCustomerParcels() {
+      try {
+        // Grab the VIP pass from local storage
+        const token = localStorage.getItem('authToken');
+        
+        if (!token) {
+          throw new Error('No authentication token found. Please log in.');
+        }
+
+        const response = await fetch('https://swiftcourier-api.onrender.com/api/bookings/all', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}` // Show the VIP pass to the server!
+          }
+        });
+
+        if (!response.ok) {
+          throw new Error('Session Expired or Access Denied');
+        }
+
+        const parcels = await response.json();
+        renderCustomerTable(parcels);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+        document.getElementById('customerParcelsTable').innerHTML = `<tr><td colspan="6" style="text-align:center; color: #ff6b6b;"><i class="fas fa-lock"></i> Session expired or unauthorized. Please <a href="login.html" style="color: #64b5f6;">log in again</a>.</td></tr>`;
+      }
+    }
+
+    // 2. Render the table with real database records
+    function renderCustomerTable(parcels) {
+      const tableBody = document.getElementById('customerParcelsTable');
+      
+      if (parcels.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted); padding:20px;">No active parcels found.</td></tr>`;
+        return;
+      }
+
+      tableBody.innerHTML = parcels.map(p => {
+        const isCancelled = p.status === 'Cancelled';
+        const isDelivered = p.status === 'Delivered';
+        
+        // Calculate the real cost based on weight
+        const weight = p.weight || 1;
+        const cost = 150 + (weight * 50);
+
+        // Determine badge styling based on status
+        let badgeClass = 'transit'; 
+        if (isDelivered) badgeClass = 'delivered';
+        if (isCancelled) badgeClass = 'cancelled';
+        if (p.status === 'Pending') badgeClass = 'pending'; 
+
+        return `
+          <tr>
+            <td><strong>${p.trackingId}</strong></td>
+            <td>${p.receiverName}</td>
+            <td>${p.parcelType || 'Standard'}</td>
+            <td><span class="badge ${badgeClass}">${p.status}</span></td>
+            <td>₹${cost.toFixed(2)}</td>
+            <td>
+              <div class="action-btns">
+                <button onclick="window.location.href='tracking.html?id=${p.trackingId}'" class="btn btn-secondary" style="padding:4px 10px; font-size:0.8rem; border: none; border-radius: 4px; cursor: pointer;">Track</button>
+                ${!isDelivered && !isCancelled ? `
+                  <button class="btn btn-warning" onclick="openModal('cancel', '${p.trackingId}')">Cancel</button>
+                ` : ''}
+                <button class="btn btn-danger" onclick="openModal('delete', '${p.trackingId}')"><i class="fas fa-trash"></i> Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    // 3. Modal UI Controls
+    function openModal(action, trackingId) {
+      currentAction = action;
+      selectedId = trackingId;
+      const titleEl = document.getElementById('modalTitle');
+      const textEl = document.getElementById('modalText');
+      const iconEl = document.getElementById('modalIcon');
+
+      if (action === 'cancel') {
+        titleEl.innerText = 'Cancel Parcel Order';
+        textEl.innerText = `Are you sure you want to cancel the order for ${trackingId}?`;
+        iconEl.className = 'fas fa-ban';
+        iconEl.style.color = '#f57c00';
+      } else if (action === 'delete') {
+        titleEl.innerText = 'Delete Parcel Permanently';
+        textEl.innerText = `This will remove ${trackingId} permanently from the database.`;
+        iconEl.className = 'fas fa-trash';
+        iconEl.style.color = '#f44336';
+      }
+
+      document.getElementById('confirmModal').classList.add('active');
+    }
+
+    function closeModal() {
+      currentAction = null;
+      selectedId = null;
+      document.getElementById('confirmModal').classList.remove('active');
+    }
+
+    // 4. Handle Live Database Updates (Cancel / Delete) securely
+    document.getElementById('confirmModalBtn').addEventListener('click', async () => {
+      if (!selectedId || !currentAction) return;
+      
+      const confirmBtn = document.getElementById('confirmModalBtn');
+      const originalText = confirmBtn.innerText;
+      confirmBtn.innerText = 'Processing...';
+      confirmBtn.disabled = true;
+
+      try {
+        const token = localStorage.getItem('authToken'); // Get token for updates too!
+
+        if (currentAction === 'cancel') {
+          // Send secured update request
+          await fetch(`http://localhost:3000/api/bookings/update/${selectedId}`, {
+            method: 'PUT',
+            headers: { 
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}` 
+            },
+            body: JSON.stringify({ status: 'Cancelled', currentLocation: 'Order Cancelled by Customer' })
+          });
+        } else if (currentAction === 'delete') {
+          // Send secured delete request
+          await fetch(`http://localhost:3000/api/bookings/${selectedId}`, {
+            method: 'DELETE',
+            headers: {
+              'Authorization': `Bearer ${token}` 
+            }
+          });
+        }
+        
+        // Hide modal and instantly refresh the table with new data
+        closeModal();
+        loadCustomerParcels(); 
+      } catch (error) {
+        console.error("Action failed:", error);
+        alert("Failed to connect to the server.");
+      } finally {
+        confirmBtn.innerText = originalText;
+        confirmBtn.disabled = false;
+      }
+    });
+
+    // Load data as soon as the page is ready
+    document.addEventListener('DOMContentLoaded', loadCustomerParcels);
+  </script>
+  <script src="js/app.js"></script>
+</body>
+</html>

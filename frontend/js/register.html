@@ -1,0 +1,46 @@
+<form id="registerForm" class="glass" style="padding: 30px; max-width: 400px; margin: 50px auto;">
+  <h2 style="margin-bottom: 20px;">Create Account</h2>
+  
+  <input type="text" id="regName" class="form-control" placeholder="Full Name" required style="margin-bottom: 15px;">
+  <input type="email" id="regEmail" class="form-control" placeholder="Email Address" required style="margin-bottom: 15px;">
+  <input type="password" id="regPassword" class="form-control" placeholder="Password" required style="margin-bottom: 15px;">
+  
+  <!-- Restricts registration to only Customers and Agents -->
+  <select id="regRole" class="form-control" style="margin-bottom: 20px;">
+    <option value="customer">Customer</option>
+    <option value="agent">Delivery Agent</option>
+  </select>
+  
+  <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center;">Register</button>
+  <p style="margin-top: 15px; text-align: center;"><a href="login.html" style="color: var(--secondary);">Back to Login</a></p>
+</form>
+
+<script src="js/app.js"></script>
+<script>
+  document.getElementById('registerForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    const name = document.getElementById('regName').value;
+    const email = document.getElementById('regEmail').value;
+    const password = document.getElementById('regPassword').value;
+    const role = document.getElementById('regRole').value;
+
+    try {
+      const response = await fetch('http://localhost:3000/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password, role })
+      });
+
+      if (response.ok) {
+        // Smooth notification instead of alert()
+        SwiftCourier.showToast('Account created! Redirecting to login...', 'success');
+        setTimeout(() => window.location.href = 'login.html', 2000);
+      } else {
+        SwiftCourier.showToast('Registration failed. Email might be in use.', 'error');
+      }
+    } catch (error) {
+      SwiftCourier.showToast('Network error. Is your backend running?', 'error');
+    }
+  });
+</script>
