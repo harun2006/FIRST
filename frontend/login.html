@@ -112,18 +112,17 @@
   </div>
 
   <!-- FIXED: Check this path! Remove 'js/' if app.js is in the same folder as this HTML file -->
+  <!-- We put the 'js/' back in the path! -->
   <script src="js/app.js"></script>
   
   <script>
     document.getElementById('loginForm').addEventListener('submit', async (e) => {
       e.preventDefault(); 
 
-      // Get the value from the input field
       const loginInput = document.getElementById('username').value;
       const password = document.getElementById('password').value;
       const loginBtn = document.getElementById('loginBtn');
       
-      // UI feedback
       const originalText = loginBtn.innerText;
       loginBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Authenticating...';
       loginBtn.disabled = true;
@@ -138,36 +137,22 @@
         const data = await response.json();
 
         if (response.ok) {
-          // FIXED: Changed 'authToken' to 'token' so admin.html can find it!
           localStorage.setItem('token', data.token);
           localStorage.setItem('userRole', data.role);
           
-          if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
-            SwiftCourier.showToast('Login successful!', 'success');
-          }
-          
-          setTimeout(() => {
-            const role = data.role;
-            if (role === 'admin') window.location.href = 'admin.html';
-            else if (role === 'branch') window.location.href = 'branch.html';
-            else if (role === 'agent') window.location.href = 'delivery.html';
-            else window.location.href = 'customer.html';
-          }, 1000);
+          // BULLETPROOF REDIRECT: No extra popups, just immediate routing!
+          const role = data.role;
+          if (role === 'admin') window.location.href = 'admin.html';
+          else if (role === 'branch') window.location.href = 'branch.html';
+          else if (role === 'agent') window.location.href = 'delivery.html';
+          else window.location.href = 'customer.html';
 
         } else {
-          if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
-            SwiftCourier.showToast(data.message || data.error || 'Invalid email or password.', 'error');
-          } else {
-            alert(data.error || 'Login failed');
-          }
+          alert(data.message || data.error || 'Invalid email or password.');
         }
       } catch (error) {
         console.error('Login error:', error);
-        if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
-            SwiftCourier.showToast('Failed to connect to the server. Is it running?', 'error');
-        } else {
-            alert('Cannot connect to server. Please try again.');
-        }
+        alert('Cannot connect to server. Please try again.');
       } finally {
         loginBtn.innerText = originalText;
         loginBtn.disabled = false;
