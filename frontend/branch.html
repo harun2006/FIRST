@@ -16,13 +16,11 @@
       <li><a href="index.html">Home</a></li>
       <li><a href="tracking.html">Track Parcel</a></li>
       <li><a href="booking.html">Book Parcel</a></li>
-      <!-- FIXED: Smart Dashboard Link added -->
       <li><a href="#" class="active" onclick="routeToDashboard(event)">Dashboards</a></li>
     </ul>
     <div class="nav-btns">
       <button class="theme-toggle" onclick="SwiftCourier.toggleTheme()"><i class="fas fa-moon"></i></button>
-      <!-- FIXED: Wired the logout button to the function -->
-      <a href="#" onclick="logoutUser()" class="btn btn-primary">Logout</a>
+      <a href="#" onclick="logoutUser(event)" class="btn btn-primary">Logout</a>
     </div>
   </nav>
 
@@ -64,7 +62,7 @@
 
   <script src="js/app.js"></script>
   <script>
-    // FIXED: Smart Routing Logic
+    // Smart Routing Logic
     function routeToDashboard(event) {
       event.preventDefault(); 
       const role = localStorage.getItem('userRole');
@@ -75,29 +73,32 @@
       else window.location.href = 'login.html';
     }
 
-    // FIXED: Logout function
-    function logoutUser() {
-      localStorage.removeItem('authToken');
+    // Logout function
+    function logoutUser(event) {
+      if(event) event.preventDefault();
+      localStorage.removeItem('token'); // FIXED: Changed to 'token'
       localStorage.removeItem('userRole');
       window.location.href = 'login.html';
     }
 
-    // FIXED: Secured Fetch Logic
+    // Secured Fetch Logic
     async function loadBranchData() {
       try {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token'); // FIXED: Changed to 'token'
+        const userRole = localStorage.getItem('userRole');
         
-        // Kick them out if not logged in
-        if (!token) {
+        // FIXED: Security Check - Kick them out if not logged in OR not a branch user
+        if (!token || userRole !== 'branch') {
           window.location.href = 'login.html';
           return;
         }
 
-        const response = await fetch('http://localhost:3000/api/bookings/all', {
+        // FIXED: Replaced localhost with the live Render API
+        const response = await fetch('https://swiftcourier-backend-live.onrender.com/api/bookings/all', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Provide the VIP pass
+            'Authorization': `Bearer ${token}` 
           }
         });
 
@@ -145,24 +146,28 @@
       }
     }
 
-    // FIXED: Secured Update Logic
+    // Secured Update Logic
     async function updateBranchRecord(trackingId) {
       const newStatus = document.getElementById(`status-${trackingId}`).value;
       const newLocation = document.getElementById(`loc-${trackingId}`).value;
 
       try {
-        const token = localStorage.getItem('authToken');
+        const token = localStorage.getItem('token'); // FIXED: Changed to 'token'
         const response = await fetch(`https://swiftcourier-backend-live.onrender.com/api/bookings/update/${trackingId}`, {
           method: 'PUT',
           headers: { 
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}` // Provide the VIP pass for updates
+            'Authorization': `Bearer ${token}` 
           },
           body: JSON.stringify({ status: newStatus, currentLocation: newLocation })
         });
 
         if (response.ok) {
-          alert(`Success! ${trackingId} updated to ${newStatus}.`);
+          if (typeof SwiftCourier !== 'undefined' && SwiftCourier.showToast) {
+            SwiftCourier.showToast(`Success! ${trackingId} updated.`, 'success');
+          } else {
+            alert(`Success! ${trackingId} updated to ${newStatus}.`);
+          }
           loadBranchData(); // Refresh UI instantly
         } else {
           alert("Failed to update database.");
