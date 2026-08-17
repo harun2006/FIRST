@@ -29,7 +29,7 @@ async function trackParcel() {
 
     try {
         // 3. Fetch data from the backend
-        const response = await fetch(`http://127.0.0.1:3000/api/bookings/track/${trackingId}`);
+        const response = await fetch(`https://swiftcourier-backend-live.onrender.com/api/bookings/track/${trackingId}`);
         const data = await response.json();
 
         // 4. Handle Not Found errors

@@ -90,7 +90,7 @@
           throw new Error('No authentication token found. Please log in.');
         }
 
-        const response = await fetch('https://swiftcourier-api.onrender.com/api/bookings/all', {
+        const response = await fetch('https://swiftcourier-backend-live.onrender.com/api/bookings/all', {
           method: 'GET',
           headers: {
             'Content-Type': 'application/json',
@@ -197,7 +197,7 @@
 
         if (currentAction === 'cancel') {
           // Send secured update request
-          await fetch(`http://localhost:3000/api/bookings/update/${selectedId}`, {
+          await fetch(`https://swiftcourier-backend-live.onrender.com/api/bookings/update/${selectedId}`, {
             method: 'PUT',
             headers: { 
               'Content-Type': 'application/json',
@@ -207,7 +207,7 @@
           });
         } else if (currentAction === 'delete') {
           // Send secured delete request
-          await fetch(`http://localhost:3000/api/bookings/${selectedId}`, {
+          await fetch(`https://swiftcourier-backend-live.onrender.com/api/bookings/${selectedId}`, {
             method: 'DELETE',
             headers: {
               'Authorization': `Bearer ${token}` 
