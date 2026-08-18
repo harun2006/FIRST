@@ -177,6 +177,27 @@
           window.location.href = 'login.html';
       }
   }
+  // Allow users to press "Enter" in the search box to track
+    document.getElementById('trackSearchInput').addEventListener('keypress', function (e) {
+      if (e.key === 'Enter') {
+        document.getElementById('trackBtn').click();
+      }
+    });
+
+    // --- NEW: AUTO-TRACK FROM DASHBOARD URL ---
+    document.addEventListener('DOMContentLoaded', () => {
+      // 1. Look at the web address (URL)
+      const urlParams = new URLSearchParams(window.location.search);
+      
+      // 2. See if there is an "?id=" attached to it
+      const autoTrackId = urlParams.get('id');
+
+      // 3. If there is, paste it into the search box and click the button!
+      if (autoTrackId) {
+        document.getElementById('trackSearchInput').value = autoTrackId;
+        document.getElementById('trackBtn').click();
+      }
+    });
 </script>
 </body>
 </html>
