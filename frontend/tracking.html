@@ -198,6 +198,19 @@
         document.getElementById('trackBtn').click();
       }
     });
+    document.addEventListener('DOMContentLoaded', () => {
+  const urlParams = new URLSearchParams(window.location.search);
+  const autoTrackId = urlParams.get('id');
+
+  if (autoTrackId) {
+    const input = document.getElementById('trackSearchInput');
+    const btn = document.getElementById('trackBtn');
+    if (input && btn) {
+      input.value = autoTrackId;
+      btn.click(); // Automatically triggers the database query
+    }
+  }
+});
 </script>
 </body>
 </html>

@@ -128,5 +128,29 @@
       }
   }
 </script>
+<script>
+  // Connect the Home Page search bar to tracking.html
+  function handleHomeTrack() {
+    const trackingInput = document.querySelector('input[placeholder*="TRK"]');
+    if (trackingInput && trackingInput.value.trim() !== '') {
+      const trackingId = encodeURIComponent(trackingInput.value.trim());
+      window.location.href = `tracking.html?id=${trackingId}`;
+    } else {
+      window.location.href = 'tracking.html';
+    }
+  }
+
+  // Attach listener to the Track Now button
+  const trackNowBtn = document.querySelector('.btn, button, a.btn');
+  const trackBtnCandidate = Array.from(document.querySelectorAll('button, a, .btn'))
+    .find(el => el.textContent.trim().toLowerCase().includes('track now'));
+
+  if (trackBtnCandidate) {
+    trackBtnCandidate.addEventListener('click', (e) => {
+      e.preventDefault();
+      handleHomeTrack();
+    });
+  }
+</script>
 </body>
 </html>
