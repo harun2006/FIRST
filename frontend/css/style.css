@@ -209,3 +209,51 @@ select option {
   background-color: #0b1437; 
   color: #ffffff;
 }
+/* =========================================
+   DARK THEME OVERRIDES
+   ========================================= */
+body.dark-theme {
+    --bg-color: #121212;
+    --glass-bg: rgba(30, 30, 30, 0.7);
+    --glass-border: rgba(255, 255, 255, 0.1);
+    --text-primary: #e0e0e0;
+    --text-muted: #a0a0a0;
+    --primary: #90caf9; 
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+}
+
+body.dark-theme .glass {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+    color: var(--text-primary);
+}
+
+body.dark-theme .navbar {
+    background: rgba(20, 20, 20, 0.9);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+body.dark-theme .auth-box,
+body.dark-theme .booking-card {
+    background: var(--glass-bg);
+    border: 1px solid var(--glass-border);
+}
+
+body.dark-theme input,
+body.dark-theme select,
+body.dark-theme .form-control {
+    background: rgba(40, 40, 40, 0.8) !important;
+    color: #ffffff !important;
+    border: 1px solid var(--glass-border) !important;
+}
+
+body.dark-theme .custom-table th {
+    background: rgba(40, 40, 40, 0.8);
+    color: var(--text-primary);
+}
+
+body.dark-theme .custom-table td {
+    color: var(--text-primary);
+    border-bottom: 1px solid var(--glass-border);
+}
