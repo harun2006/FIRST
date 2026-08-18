@@ -47,3 +47,12 @@ window.logoutUser = function(event) {
     // Send them to the login page and trigger the logout animation!
     window.location.href = 'login.html?loggedOut=true';
 };
+// Global Logout Function
+window.logoutUser = function(event) {
+    if(event) event.preventDefault();
+    // Destroy the tokens
+    localStorage.removeItem('token');
+    localStorage.removeItem('userRole');
+    // Send them to the login page and trigger the logout animation!
+    window.location.href = 'login.html?loggedOut=true';
+};
