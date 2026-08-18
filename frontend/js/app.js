@@ -110,7 +110,8 @@
             submitBtn.disabled = false;
         }
     });
-    // 1. Create the SwiftCourier global object if it doesn't exist yet
+  </script>
+  // 1. Create the SwiftCourier global object if it doesn't exist yet
 window.SwiftCourier = window.SwiftCourier || {};
 
 // 2. Define the exact function the HTML buttons are looking for
@@ -150,6 +151,5 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
-  </script>
 </body>
 </html>
